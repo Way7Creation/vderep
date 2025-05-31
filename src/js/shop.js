@@ -185,7 +185,7 @@ class ShopManager {
     }
     
     /**
-     * Загрузка товаров
+     * Рендеринг товаров
      */
     async loadProducts() {
         if (this.isLoading) return;
@@ -214,41 +214,36 @@ class ShopManager {
                 this.updatePagination();
                 this.updateInfo();
             } else {
-                this.showError('Ошибка загрузки товаров');
+                this.showNoProductsError(result.error);
             }
         } catch (error) {
             console.error('Error loading products:', error);
-            this.showError('Не удалось загрузить товары');
+            this.showNoProductsError(error.message);
         } finally {
             this.isLoading = false;
             this.hideLoading();
         }
     }
     
-    /**
-     * Рендеринг товаров
-     */
-    renderProducts() {
-        if (this.products.length === 0) {
-            this.showNoProducts();
-            return;
+    showNoProductsError(errorMessage = null) {
+        this.products = [];
+        this.totalProducts = 0;
+        this.totalPages = 1;
+        
+        // Показываем блок "товары не найдены" ТОЛЬКО ОДИН РАЗ
+        this.showNoProducts();
+        
+        // Обновляем интерфейс
+        this.updatePagination();
+        this.updateInfo();
+        
+        // Логируем ошибку, но НЕ показываем toast
+        if (errorMessage) {
+            console.warn('Поиск товаров:', errorMessage);
         }
-        
-        this.hideNoProducts();
-        
-        const html = this.products.map(product => this.renderProductCard(product)).join('');
-        this.elements.productsGrid.innerHTML = html;
-        
-        // Анимация появления
-        requestAnimationFrame(() => {
-            this.elements.productsGrid.querySelectorAll('.product-card').forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 50);
-            });
-        });
     }
+    
+
     
     /**
      * Рендеринг карточки товара
@@ -541,10 +536,7 @@ class ShopManager {
     hideNoProducts() {
         this.elements.noProducts.style.display = 'none';
     }
-    
-    /**
-     * Показать ошибку
-     */
+     
     showError(message) {
         showToast(message, true);
     }
@@ -658,21 +650,23 @@ class ShopManager {
         
         return labels[key] || key;
     }
+    
+    
 }
 
 // Экспорт для глобального доступа
 window.ShopManager = ShopManager;
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.querySelector('.shop-container')) {
-        window.shopManager = new ShopManager();
+// // Инициализация при загрузке страницы
+// document.addEventListener('DOMContentLoaded', () => {
+//     if (document.querySelector('.shop-container')) {
+//         window.shopManager = new ShopManager();
         
-        // Глобальные функции для обратной совместимости
-        window.clearAllFilters = () => window.shopManager.clearAllFilters();
-        window.setFilter = (key, value) => window.shopManager.setFilter(key, value);
-    }
-});
+//         // Глобальные функции для обратной совместимости
+//         window.clearAllFilters = () => window.shopManager.clearAllFilters();
+//         window.setFilter = (key, value) => window.shopManager.setFilter(key, value);
+//     }
+// });
 
 // Экспорт класса
 export { ShopManager };
